@@ -43,12 +43,24 @@ def triage_sensors(train: pd.DataFrame) -> pd.DataFrame:
     for s in SENSOR_COLS:
         std = train[s].std()
 
-        # per-engine correlation with true (uncapped) RUL
-        cors = (
-            train.groupby("unit")[[s, "rul"]]
-            .apply(lambda g: g[s].corr(g["rul"]))
-            .dropna()
-        )
+        if std <= 1e-8:
+            # A constant sensor has no correlation to compute — asking for one
+            # is a divide-by-zero. Short-circuit instead of letting numpy warn.
+            mean_cor, agreement = 0.0, np.nan
+            rows.append(dict(sensor=s, std=std, mean_corr_with_rul=mean_cor,
+                             abs_corr=0.0, direction_agreement=agreement))
+            continue
+
+        # Per-engine correlation with true (uncapped) RUL.
+        # errstate: a sensor can still be constant WITHIN a single engine even if
+        # it varies across the fleet (sensor_6 does this). Correlation is then
+        # undefined -> NaN, which we drop. Expected, not an error.
+        with np.errstate(invalid="ignore", divide="ignore"):
+            cors = (
+                train.groupby("unit")[[s, "rul"]]
+                .apply(lambda g: g[s].corr(g["rul"]), include_groups=False)
+                .dropna()
+            )
         mean_cor = cors.mean() if len(cors) else np.nan
         # what fraction of engines agree on the sign of the trend?
         agreement = (np.sign(cors) == np.sign(mean_cor)).mean() if len(cors) else np.nan
