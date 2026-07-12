@@ -1,0 +1,39 @@
+{
+  "winner": "2. RandomForest",
+  "winner_key": "rf",
+  "rul_cap": 125,
+  "results": [
+    {
+      "model": "1. Linear (baseline)",
+      "MAE": 17.37,
+      "RMSE": 22.19,
+      "pct_early": 48.0,
+      "pct_late": 52.0,
+      "worst_late_call": 54.5
+    },
+    {
+      "model": "1b. Linear + features",
+      "MAE": 13.11,
+      "RMSE": 16.17,
+      "pct_early": 46.0,
+      "pct_late": 54.0,
+      "worst_late_call": 44.6
+    },
+    {
+      "model": "2. RandomForest",
+      "MAE": 10.27,
+      "RMSE": 13.97,
+      "pct_early": 46.0,
+      "pct_late": 54.0,
+      "worst_late_call": 32.5
+    },
+    {
+      "model": "3. LSTM",
+      "MAE": 10.66,
+      "RMSE": 15.29,
+      "pct_early": 42.0,
+      "pct_late": 58.0,
+      "worst_late_call": 46.3
+    }
+  ]
+}
