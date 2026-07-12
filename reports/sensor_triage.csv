@@ -1,0 +1,22 @@
+sensor,std,mean_corr_with_rul,abs_corr,direction_agreement,useful,verdict
+sensor_11,0.2670873986396848,-0.8106012169818558,0.8106012169818558,1.0,True,KEEP — drifts consistently with age
+sensor_12,0.7375533922097114,0.7896622493654601,0.7896622493654601,1.0,True,KEEP — drifts consistently with age
+sensor_4,9.000604780543714,-0.7816136711112748,0.7816136711112748,1.0,True,KEEP — drifts consistently with age
+sensor_7,0.8850922576634073,0.7615143940109728,0.7615143940109728,1.0,True,KEEP — drifts consistently with age
+sensor_15,0.03750503795196652,-0.7248441832436676,0.7248441832436676,1.0,True,KEEP — drifts consistently with age
+sensor_21,0.10825087474491234,0.716709609281441,0.716709609281441,1.0,True,KEEP — drifts consistently with age
+sensor_20,0.18074642787366085,0.71411980953092,0.71411980953092,1.0,True,KEEP — drifts consistently with age
+sensor_13,0.07191891569857813,-0.6873161247995505,0.6873161247995505,1.0,True,KEEP — drifts consistently with age
+sensor_8,0.07098547889092417,-0.683526241131408,0.683526241131408,1.0,True,KEEP — drifts consistently with age
+sensor_2,0.5000532700606232,-0.6752756106641427,0.6752756106641427,1.0,True,KEEP — drifts consistently with age
+sensor_17,1.5487630246142987,-0.6731228647815104,0.6731228647815104,1.0,True,KEEP — drifts consistently with age
+sensor_3,6.131149519690819,-0.6439503481802927,0.6439503481802927,1.0,True,KEEP — drifts consistently with age
+sensor_9,22.082879525066232,-0.38595548514739414,0.38595548514739414,0.71,False,"DROP — moves, but no reliable trend"
+sensor_14,19.07617597595311,-0.2235038612172007,0.2235038612172007,0.6,False,"DROP — moves, but no reliable trend"
+sensor_6,0.0013889849127073112,-0.09541396251140015,0.09541396251140015,0.6777777777777778,False,"DROP — moves, but no reliable trend"
+sensor_10,0.0,0.0,0.0,1.0,False,"FLAT — constant, zero information"
+sensor_5,1.776399891637612e-15,0.0,0.0,1.0,False,"FLAT — constant, zero information"
+sensor_16,1.3878124153418844e-17,0.0,0.0,1.0,False,"FLAT — constant, zero information"
+sensor_18,0.0,,0.0,,False,"FLAT — constant, zero information"
+sensor_19,0.0,,0.0,,False,"FLAT — constant, zero information"
+sensor_1,0.0,0.0,0.0,1.0,False,"FLAT — constant, zero information"
