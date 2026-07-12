@@ -1,6 +1,6 @@
 # Predicting Jet Engine Failure Before It Happens
 
-### 🔗 **[View the live dashboard →](https://YOUR-GITHUB-USERNAME.github.io/predictive-maintenance/)**
+### 🔗 **[View the live dashboard →](https://FerasElghandour.github.io/predictive-maintenance/)**
 
 ---
 
@@ -169,4 +169,4 @@ Same architecture. Same failure modes. Same triage of *"which of these signals i
 
 Built by **Feras Elghandour** — part of a series on building intelligent systems that solve real-world problems.
 
-🔗 [GitHub](https://github.com/YOUR-GITHUB-USERNAME) · [Site](https://tenx-gc.com)
+🔗 [GitHub](https://github.com/FerasElghandour) · [Site](https://tenx-gc.com)

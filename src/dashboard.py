@@ -30,7 +30,7 @@ DOCS = ROOT / "docs"
 DOCS.mkdir(exist_ok=True)
 
 AUTHOR = "Feras Elghandour"
-AUTHOR_LINK = "https://github.com/FERAS-GITHUB-HANDLE"   # <-- replace with your profile URL
+AUTHOR_LINK = "https://github.com/FerasElghandour"
 
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
