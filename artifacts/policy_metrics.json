@@ -1,0 +1,216 @@
+{
+  "chosen": {
+    "threshold_pct": 35,
+    "lead_time_cycles": 20,
+    "fires_below_cycles": 43.8,
+    "engines_flagged": 29,
+    "pct_too_late": 0.0,
+    "pct_never_warned": 0.0,
+    "pct_false_alarm": 10.0,
+    "pct_good_call": 19.0,
+    "median_runway_cycles": 40,
+    "median_life_wasted_cycles": 7
+  },
+  "sweep": [
+    {
+      "threshold_pct": 30,
+      "lead_time_cycles": 20,
+      "fires_below_cycles": 37.5,
+      "engines_flagged": 27,
+      "pct_too_late": 0.0,
+      "pct_never_warned": 1.0,
+      "pct_false_alarm": 9.0,
+      "pct_good_call": 18.0,
+      "median_runway_cycles": 33,
+      "median_life_wasted_cycles": 3
+    },
+    {
+      "threshold_pct": 35,
+      "lead_time_cycles": 20,
+      "fires_below_cycles": 43.8,
+      "engines_flagged": 29,
+      "pct_too_late": 0.0,
+      "pct_never_warned": 0.0,
+      "pct_false_alarm": 10.0,
+      "pct_good_call": 19.0,
+      "median_runway_cycles": 40,
+      "median_life_wasted_cycles": 7
+    },
+    {
+      "threshold_pct": 40,
+      "lead_time_cycles": 20,
+      "fires_below_cycles": 50.0,
+      "engines_flagged": 33,
+      "pct_too_late": 0.0,
+      "pct_never_warned": 1.0,
+      "pct_false_alarm": 14.0,
+      "pct_good_call": 19.0,
+      "median_runway_cycles": 47,
+      "median_life_wasted_cycles": 6
+    },
+    {
+      "threshold_pct": 45,
+      "lead_time_cycles": 20,
+      "fires_below_cycles": 56.2,
+      "engines_flagged": 37,
+      "pct_too_late": 0.0,
+      "pct_never_warned": 2.0,
+      "pct_false_alarm": 15.0,
+      "pct_good_call": 22.0,
+      "median_runway_cycles": 54,
+      "median_life_wasted_cycles": 4
+    }
+  ],
+  "lead_time_sensitivity": {
+    "10": [
+      {
+        "threshold_pct": 30,
+        "lead_time_cycles": 10,
+        "fires_below_cycles": 37.5,
+        "engines_flagged": 27,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 9.0,
+        "pct_good_call": 18.0,
+        "median_runway_cycles": 33,
+        "median_life_wasted_cycles": 3
+      },
+      {
+        "threshold_pct": 35,
+        "lead_time_cycles": 10,
+        "fires_below_cycles": 43.8,
+        "engines_flagged": 29,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 0.0,
+        "pct_false_alarm": 10.0,
+        "pct_good_call": 19.0,
+        "median_runway_cycles": 40,
+        "median_life_wasted_cycles": 7
+      },
+      {
+        "threshold_pct": 40,
+        "lead_time_cycles": 10,
+        "fires_below_cycles": 50.0,
+        "engines_flagged": 33,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 14.0,
+        "pct_good_call": 19.0,
+        "median_runway_cycles": 47,
+        "median_life_wasted_cycles": 6
+      },
+      {
+        "threshold_pct": 45,
+        "lead_time_cycles": 10,
+        "fires_below_cycles": 56.2,
+        "engines_flagged": 37,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 2.0,
+        "pct_false_alarm": 15.0,
+        "pct_good_call": 22.0,
+        "median_runway_cycles": 54,
+        "median_life_wasted_cycles": 4
+      }
+    ],
+    "20": [
+      {
+        "threshold_pct": 30,
+        "lead_time_cycles": 20,
+        "fires_below_cycles": 37.5,
+        "engines_flagged": 27,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 9.0,
+        "pct_good_call": 18.0,
+        "median_runway_cycles": 33,
+        "median_life_wasted_cycles": 3
+      },
+      {
+        "threshold_pct": 35,
+        "lead_time_cycles": 20,
+        "fires_below_cycles": 43.8,
+        "engines_flagged": 29,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 0.0,
+        "pct_false_alarm": 10.0,
+        "pct_good_call": 19.0,
+        "median_runway_cycles": 40,
+        "median_life_wasted_cycles": 7
+      },
+      {
+        "threshold_pct": 40,
+        "lead_time_cycles": 20,
+        "fires_below_cycles": 50.0,
+        "engines_flagged": 33,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 14.0,
+        "pct_good_call": 19.0,
+        "median_runway_cycles": 47,
+        "median_life_wasted_cycles": 6
+      },
+      {
+        "threshold_pct": 45,
+        "lead_time_cycles": 20,
+        "fires_below_cycles": 56.2,
+        "engines_flagged": 37,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 2.0,
+        "pct_false_alarm": 15.0,
+        "pct_good_call": 22.0,
+        "median_runway_cycles": 54,
+        "median_life_wasted_cycles": 4
+      }
+    ],
+    "30": [
+      {
+        "threshold_pct": 30,
+        "lead_time_cycles": 30,
+        "fires_below_cycles": 37.5,
+        "engines_flagged": 27,
+        "pct_too_late": 7.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 9.0,
+        "pct_good_call": 11.0,
+        "median_runway_cycles": 33,
+        "median_life_wasted_cycles": 3
+      },
+      {
+        "threshold_pct": 35,
+        "lead_time_cycles": 30,
+        "fires_below_cycles": 43.8,
+        "engines_flagged": 29,
+        "pct_too_late": 1.0,
+        "pct_never_warned": 0.0,
+        "pct_false_alarm": 10.0,
+        "pct_good_call": 18.0,
+        "median_runway_cycles": 40,
+        "median_life_wasted_cycles": 7
+      },
+      {
+        "threshold_pct": 40,
+        "lead_time_cycles": 30,
+        "fires_below_cycles": 50.0,
+        "engines_flagged": 33,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 1.0,
+        "pct_false_alarm": 14.0,
+        "pct_good_call": 19.0,
+        "median_runway_cycles": 47,
+        "median_life_wasted_cycles": 6
+      },
+      {
+        "threshold_pct": 45,
+        "lead_time_cycles": 30,
+        "fires_below_cycles": 56.2,
+        "engines_flagged": 37,
+        "pct_too_late": 0.0,
+        "pct_never_warned": 2.0,
+        "pct_false_alarm": 15.0,
+        "pct_good_call": 22.0,
+        "median_runway_cycles": 54,
+        "median_life_wasted_cycles": 4
+      }
+    ]
+  }
+}
