@@ -10,6 +10,14 @@ Estimate remaining engine life and translate predictions into an inspectable mai
 
 The figure separates timely and early warnings, observed misses and histories censored before the danger window. Replotted from the [corrected report data](docs/data.json).
 
+
+## Train and persist the maintenance model
+
+The corrected engine-disjoint training/model-selection path now exports its fitted model, feature order, policy threshold and test predictions. Reloaded predictions match exactly; the retained endpoint MAE remains**13.4434 cycles**.
+
+[Commands, artifacts and benchmark scope](BENCHMARKS.md) · [Versioned profiles](reproduction.json)
+
+
 ## Problem and implementation
 
 Maintenance decisions depend on warning lead time, early interventions, and failures that a prediction never reaches. This project builds causal sensor features, compares a scaled Ridge baseline with a random forest, and evaluates a threshold policy using whole-engine splits.
@@ -50,3 +58,4 @@ The method separates prediction quality from the cost and timing of intervention
 Before operational deployment, validate on prospective fleet records, agree intervention costs and lead times, assess drift and uncertainty, and integrate a human maintenance review.
 
 [Portfolio](https://feraselghandour.github.io/) · [Professional inquiries](https://www.linkedin.com/in/feras-elghandour/)
+

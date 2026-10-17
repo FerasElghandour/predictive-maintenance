@@ -1,0 +1,15 @@
+{
+  "python": "3.14.3",
+  "platform": "macOS ARM64",
+  "device": "CPU",
+  "versions": {
+    "numpy": "2.5.4",
+    "torch": "2.14.1",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "Pillow": "13.0.0",
+    "gymnasium": "1.4.0"
+  },
+  "scope": "Observed validation runtime; not a claim of clean-install compatibility on other platforms"
+}

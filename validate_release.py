@@ -75,7 +75,16 @@ def main():
     test = load_test()
     test_mae = snapshot_mae(model, test)
     test["pred_rul"] = np.clip(model.predict(build_features(test)[feature_columns()]), 0, RUL_CAP)
+    import joblib
+    artifact = ROOT / "artifacts/trained_model.joblib"
+    joblib.dump({"model":model,"features":feature_columns(),"rul_cap":RUL_CAP,"threshold":selected["threshold"]},artifact)
+    restored=joblib.load(artifact)
+    restored_predictions=np.clip(restored["model"].predict(build_features(test)[restored["features"]]),0,RUL_CAP)
+    if not np.array_equal(restored_predictions,test["pred_rul"].to_numpy()):raise AssertionError("Checkpoint reload changed predictions")
+    test[["unit","cycle","pred_rul"]].to_csv(ROOT/"artifacts/test_predictions.csv",index=False)
     report = {
+        "checkpoint_sha256":hashlib.sha256(artifact.read_bytes()).hexdigest(),
+        "checkpoint_reload_exact":True,
         "protocol": "engine-disjoint development and validation; historical public test cohort; observed-window policy replay",
         "train_engines": sorted(int(n) for n in train.unit.unique()),
         "validation_engines": sorted(int(n) for n in val.unit.unique()),

@@ -1,4 +1,6 @@
 {
+  "checkpoint_sha256": "cd102e3cfa149f50cd7bee3d437e60ee368c928a422b37305c548a0d19ffa027",
+  "checkpoint_reload_exact": true,
   "protocol": "engine-disjoint development and validation; historical public test cohort; observed-window policy replay",
   "train_engines": [
     1,
@@ -189,7 +191,7 @@
     "Observed-window rates do not establish eventual failure coverage or certified safety."
   ],
   "source_sha256": {
-    "validate_release.py": "7a0148af65eacd0bca537799e435d396e0a7b2ad517929e7f8a326b24ac2a681",
+    "validate_release.py": "6b23eb978ee5fcd9c433b9a8c4120c459b0d8080164a11cd3f3e2d2255b7c354",
     "src/features.py": "e00b2102dad0ec4b828e4b933dbb98a97d7f216cfb49700ab00a558179da3c33",
     "src/data.py": "8975b31693b9d2470dc766125403525e2b731b7788bd25cc06d8cbf7146a12bb"
   },

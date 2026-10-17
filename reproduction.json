@@ -1,0 +1,32 @@
+{
+  "repository": "predictive-maintenance",
+  "version_packages": [
+    "numpy",
+    "torch",
+    "pandas",
+    "scikit-learn"
+  ],
+  "profiles": {
+    "checks": {
+      "scope": "Existing focused regression suite",
+      "commands": [
+        [
+          "{python}",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ]
+      ]
+    },
+    "full-benchmark": {
+      "scope": "Engine-disjoint fitted model selection and censored historical test replay; model persistence/reload parity",
+      "commands": [
+        [
+          "{python}",
+          "validate_release.py"
+        ]
+      ]
+    }
+  }
+}
