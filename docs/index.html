@@ -1,735 +1,204 @@
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Turbofan Fleet — Predictive Maintenance</title>
-<meta name="description" content="Predicts jet engine failure ~40 cycles before it happens. 0% missed, 0% too late to act, on 100 unseen engines.">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-background:#0f1216;color:#e8ecf1;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
-header{border-bottom:1px solid #232a33;padding-bottom:24px;margin-bottom:28px}
-h1{font-size:26px;font-weight:650;letter-spacing:-.01em}
-.sub{color:#8b97a6;margin-top:8px;font-size:15px}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:#8b97a6;
-margin:38px 0 14px;font-weight:600}
-.hero{background:#151a21;border:1px solid #232a33;border-radius:10px;padding:22px 24px}
-.hero p{color:#c3ccd7;font-size:15px}
-.hero strong{color:#fff}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
-.kpi{background:#0f1419;border:1px solid #232a33;border-radius:8px;padding:14px}
-.kpi .v{font-size:26px;font-weight:680;letter-spacing:-.02em}
-.kpi .l{font-size:12px;color:#8b97a6;margin-top:3px;line-height:1.35}
-.good{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}
-.fleet{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.card{background:#151a21;border:1px solid #232a33;border-radius:10px;padding:18px;
-border-left:3px solid #2d3540}
-.card.red{border-left-color:#f85149}.card.amber{border-left-color:#d29922}
-.card.green{border-left-color:#3fb950}
-.card .n{font-size:30px;font-weight:680;letter-spacing:-.02em}
-.card .t{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#8b97a6;margin-top:2px}
-.card .d{font-size:13px;color:#6e7a89;margin-top:8px}
-.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.filters button{background:#151a21;border:1px solid #232a33;color:#8b97a6;padding:7px 14px;
-border-radius:999px;font-size:13px;cursor:pointer;font-family:inherit}
-.filters button:hover{border-color:#3a4453;color:#e8ecf1}
-.filters button.on{background:#e8ecf1;color:#0f1216;border-color:#e8ecf1;font-weight:600}
-.tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;
-color:#6e7a89;padding:10px 12px;border-bottom:1px solid #232a33;font-weight:600}
-.tbl td{padding:11px 12px;border-bottom:1px solid #1a2028}
-.tbl tr:hover td{background:#151a21}
-.eng{font-weight:600}
-.bar{width:74px;height:5px;background:#232a33;border-radius:3px;overflow:hidden;display:inline-block;
-vertical-align:middle;margin-right:9px}
-.bar i{display:block;height:100%}
-.pill{font-size:11px;font-weight:650;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.pill.red{background:rgba(248,81,73,.14);color:#f85149}
-.pill.amber{background:rgba(210,153,34,.14);color:#d29922}
-.pill.green{background:rgba(63,185,80,.13);color:#3fb950}
-.note{color:#6e7a89;font-size:13px;margin-top:10px}
-footer{margin-top:44px;padding-top:20px;border-top:1px solid #232a33;color:#6e7a89;font-size:13px}
-footer a{color:#8b97a6}
-.mono{font-variant-numeric:tabular-nums}
-@media(max-width:760px){
- .kpis{grid-template-columns:repeat(2,1fr)}
- .fleet{grid-template-columns:1fr}
- .wrap{padding:22px 14px 60px}
- h1{font-size:21px}
- .hide-sm{display:none}
- .tbl td,.tbl th{padding:9px 8px}
-}
-</style>
-</head><body><div class="wrap">
-
-<header>
-<h1>Turbofan Fleet — Predictive Maintenance</h1>
-<div class="sub">Which of these 100 jet engines is about to fail, and which do I fix first?</div>
-</header>
-
-<div class="hero">
-<p><strong>The problem.</strong> Jet engines don't fail on a schedule. In this fleet they last anywhere
-from 128 to 362 cycles. Replace them all early and you burn money; wait too long and one fails in flight.</p>
-<p style="margin-top:10px"><strong>The result.</strong> This system reads 12 sensors, predicts how many
-cycles each engine has left, and turns that into a maintenance decision. Tested by replaying
-<strong>100 engines it had never seen</strong> against the true failure times — it caught
-<strong>every engine that was going to fail</strong>, and gave the crew a median of
-<strong>40 cycles</strong> of warning.</p>
-
-<div class="kpis">
-<div class="kpi"><div class="v good">0%</div><div class="l">Flagged too late to act</div></div>
-<div class="kpi"><div class="v good">0%</div><div class="l">Failures we missed entirely</div></div>
-<div class="kpi"><div class="v warn">10%</div><div class="l">False alarms (wasted ~7 cycles each)</div></div>
-<div class="kpi"><div class="v">40</div><div class="l">Median cycles of warning given</div></div>
-</div>
-<div class="note">Policy: flag an engine when predicted health drops below 35%,
-assuming the crew needs 20+ cycles of notice. Model:
-RandomForest, average error 10.27 cycles.</div>
-</div>
-
-<h2>Fleet status today</h2>
-<div class="fleet">
-<div class="card red"><div class="n">28</div><div class="t">Maintenance required</div>
-<div class="d">Below 35% health. Schedule now.</div></div>
-<div class="card amber"><div class="n">21</div><div class="t">Monitor</div>
-<div class="d">Degrading. Watch the trend.</div></div>
-<div class="card green"><div class="n">51</div><div class="t">Healthy</div>
-<div class="d">No action needed.</div></div>
-</div>
-
-<h2>Every engine, most urgent first</h2>
-<div class="filters">
-<button class="on" data-f="all">All 100</button>
-<button data-f="red">Maintenance (28)</button>
-<button data-f="amber">Monitor (21)</button>
-<button data-f="green">Healthy (51)</button>
-</div>
-<table class="tbl">
-<thead><tr>
-<th>Engine</th><th>Predicted cycles left</th><th class="hide-sm">Actual (answer key)</th>
-<th>Health</th><th>Status</th>
-</tr></thead>
-<tbody>
-<tr data-s="red">
-<td class="eng">Engine 81</td>
-<td class="mono">6</td>
-<td class="mono hide-sm">8</td>
-<td><span class="bar"><i style="width:5%;background:#f85149"></i></span><span class="mono">5%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 34</td>
-<td class="mono">7</td>
-<td class="mono hide-sm">7</td>
-<td><span class="bar"><i style="width:6%;background:#f85149"></i></span><span class="mono">6%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 76</td>
-<td class="mono">9</td>
-<td class="mono hide-sm">10</td>
-<td><span class="bar"><i style="width:7%;background:#f85149"></i></span><span class="mono">7%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 82</td>
-<td class="mono">10</td>
-<td class="mono hide-sm">9</td>
-<td><span class="bar"><i style="width:8%;background:#f85149"></i></span><span class="mono">8%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 35</td>
-<td class="mono">11</td>
-<td class="mono hide-sm">11</td>
-<td><span class="bar"><i style="width:9%;background:#f85149"></i></span><span class="mono">9%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 68</td>
-<td class="mono">11</td>
-<td class="mono hide-sm">8</td>
-<td><span class="bar"><i style="width:9%;background:#f85149"></i></span><span class="mono">9%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 42</td>
-<td class="mono">12</td>
-<td class="mono hide-sm">10</td>
-<td><span class="bar"><i style="width:10%;background:#f85149"></i></span><span class="mono">10%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 20</td>
-<td class="mono">13</td>
-<td class="mono hide-sm">16</td>
-<td><span class="bar"><i style="width:10%;background:#f85149"></i></span><span class="mono">10%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 31</td>
-<td class="mono">13</td>
-<td class="mono hide-sm">8</td>
-<td><span class="bar"><i style="width:10%;background:#f85149"></i></span><span class="mono">10%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 49</td>
-<td class="mono">17</td>
-<td class="mono hide-sm">21</td>
-<td><span class="bar"><i style="width:14%;background:#f85149"></i></span><span class="mono">14%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 56</td>
-<td class="mono">18</td>
-<td class="mono hide-sm">15</td>
-<td><span class="bar"><i style="width:15%;background:#f85149"></i></span><span class="mono">15%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 66</td>
-<td class="mono">18</td>
-<td class="mono hide-sm">14</td>
-<td><span class="bar"><i style="width:15%;background:#f85149"></i></span><span class="mono">15%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 92</td>
-<td class="mono">21</td>
-<td class="mono hide-sm">20</td>
-<td><span class="bar"><i style="width:17%;background:#f85149"></i></span><span class="mono">17%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 61</td>
-<td class="mono">23</td>
-<td class="mono hide-sm">21</td>
-<td><span class="bar"><i style="width:18%;background:#f85149"></i></span><span class="mono">18%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 36</td>
-<td class="mono">23</td>
-<td class="mono hide-sm">19</td>
-<td><span class="bar"><i style="width:18%;background:#f85149"></i></span><span class="mono">18%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 100</td>
-<td class="mono">25</td>
-<td class="mono hide-sm">20</td>
-<td><span class="bar"><i style="width:20%;background:#f85149"></i></span><span class="mono">20%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 91</td>
-<td class="mono">27</td>
-<td class="mono hide-sm">38</td>
-<td><span class="bar"><i style="width:21%;background:#f85149"></i></span><span class="mono">21%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 24</td>
-<td class="mono">28</td>
-<td class="mono hide-sm">20</td>
-<td><span class="bar"><i style="width:22%;background:#f85149"></i></span><span class="mono">22%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 64</td>
-<td class="mono">30</td>
-<td class="mono hide-sm">28</td>
-<td><span class="bar"><i style="width:24%;background:#f85149"></i></span><span class="mono">24%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 41</td>
-<td class="mono">32</td>
-<td class="mono hide-sm">18</td>
-<td><span class="bar"><i style="width:25%;background:#f85149"></i></span><span class="mono">25%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 77</td>
-<td class="mono">32</td>
-<td class="mono hide-sm">34</td>
-<td><span class="bar"><i style="width:25%;background:#f85149"></i></span><span class="mono">25%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 37</td>
-<td class="mono">32</td>
-<td class="mono hide-sm">21</td>
-<td><span class="bar"><i style="width:25%;background:#f85149"></i></span><span class="mono">25%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 90</td>
-<td class="mono">32</td>
-<td class="mono hide-sm">28</td>
-<td><span class="bar"><i style="width:26%;background:#f85149"></i></span><span class="mono">26%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 53</td>
-<td class="mono">33</td>
-<td class="mono hide-sm">26</td>
-<td><span class="bar"><i style="width:26%;background:#f85149"></i></span><span class="mono">26%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 58</td>
-<td class="mono">33</td>
-<td class="mono hide-sm">37</td>
-<td><span class="bar"><i style="width:27%;background:#f85149"></i></span><span class="mono">27%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 18</td>
-<td class="mono">34</td>
-<td class="mono hide-sm">28</td>
-<td><span class="bar"><i style="width:28%;background:#f85149"></i></span><span class="mono">28%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 40</td>
-<td class="mono">35</td>
-<td class="mono hide-sm">28</td>
-<td><span class="bar"><i style="width:28%;background:#f85149"></i></span><span class="mono">28%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="red">
-<td class="eng">Engine 52</td>
-<td class="mono">38</td>
-<td class="mono hide-sm">29</td>
-<td><span class="bar"><i style="width:30%;background:#f85149"></i></span><span class="mono">30%</span></td>
-<td><span class="pill red">MAINTENANCE</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 46</td>
-<td class="mono">45</td>
-<td class="mono hide-sm">47</td>
-<td><span class="bar"><i style="width:36%;background:#d29922"></i></span><span class="mono">36%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 93</td>
-<td class="mono">47</td>
-<td class="mono hide-sm">85</td>
-<td><span class="bar"><i style="width:38%;background:#d29922"></i></span><span class="mono">38%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 43</td>
-<td class="mono">48</td>
-<td class="mono hide-sm">59</td>
-<td><span class="bar"><i style="width:38%;background:#d29922"></i></span><span class="mono">38%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 3</td>
-<td class="mono">50</td>
-<td class="mono hide-sm">69</td>
-<td><span class="bar"><i style="width:40%;background:#d29922"></i></span><span class="mono">40%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 17</td>
-<td class="mono">51</td>
-<td class="mono hide-sm">50</td>
-<td><span class="bar"><i style="width:41%;background:#d29922"></i></span><span class="mono">41%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 84</td>
-<td class="mono">54</td>
-<td class="mono hide-sm">58</td>
-<td><span class="bar"><i style="width:43%;background:#d29922"></i></span><span class="mono">43%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 72</td>
-<td class="mono">54</td>
-<td class="mono hide-sm">50</td>
-<td><span class="bar"><i style="width:43%;background:#d29922"></i></span><span class="mono">43%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 62</td>
-<td class="mono">54</td>
-<td class="mono hide-sm">54</td>
-<td><span class="bar"><i style="width:43%;background:#d29922"></i></span><span class="mono">43%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 94</td>
-<td class="mono">58</td>
-<td class="mono hide-sm">55</td>
-<td><span class="bar"><i style="width:46%;background:#d29922"></i></span><span class="mono">46%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 32</td>
-<td class="mono">58</td>
-<td class="mono hide-sm">48</td>
-<td><span class="bar"><i style="width:46%;background:#d29922"></i></span><span class="mono">46%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 38</td>
-<td class="mono">62</td>
-<td class="mono hide-sm">50</td>
-<td><span class="bar"><i style="width:50%;background:#d29922"></i></span><span class="mono">50%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 79</td>
-<td class="mono">64</td>
-<td class="mono hide-sm">63</td>
-<td><span class="bar"><i style="width:51%;background:#d29922"></i></span><span class="mono">51%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 45</td>
-<td class="mono">69</td>
-<td class="mono hide-sm">114</td>
-<td><span class="bar"><i style="width:55%;background:#d29922"></i></span><span class="mono">55%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 13</td>
-<td class="mono">70</td>
-<td class="mono hide-sm">95</td>
-<td><span class="bar"><i style="width:56%;background:#d29922"></i></span><span class="mono">56%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 98</td>
-<td class="mono">70</td>
-<td class="mono hide-sm">59</td>
-<td><span class="bar"><i style="width:56%;background:#d29922"></i></span><span class="mono">56%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 8</td>
-<td class="mono">72</td>
-<td class="mono hide-sm">95</td>
-<td><span class="bar"><i style="width:58%;background:#d29922"></i></span><span class="mono">58%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 80</td>
-<td class="mono">73</td>
-<td class="mono hide-sm">90</td>
-<td><span class="bar"><i style="width:58%;background:#d29922"></i></span><span class="mono">58%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 10</td>
-<td class="mono">74</td>
-<td class="mono hide-sm">96</td>
-<td><span class="bar"><i style="width:59%;background:#d29922"></i></span><span class="mono">59%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 4</td>
-<td class="mono">75</td>
-<td class="mono hide-sm">82</td>
-<td><span class="bar"><i style="width:60%;background:#d29922"></i></span><span class="mono">60%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 27</td>
-<td class="mono">80</td>
-<td class="mono hide-sm">66</td>
-<td><span class="bar"><i style="width:64%;background:#d29922"></i></span><span class="mono">64%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="amber">
-<td class="eng">Engine 97</td>
-<td class="mono">80</td>
-<td class="mono hide-sm">82</td>
-<td><span class="bar"><i style="width:64%;background:#d29922"></i></span><span class="mono">64%</span></td>
-<td><span class="pill amber">MONITOR</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 63</td>
-<td class="mono">81</td>
-<td class="mono hide-sm">72</td>
-<td><span class="bar"><i style="width:65%;background:#3fb950"></i></span><span class="mono">65%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 12</td>
-<td class="mono">83</td>
-<td class="mono hide-sm">124</td>
-<td><span class="bar"><i style="width:67%;background:#3fb950"></i></span><span class="mono">67%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 5</td>
-<td class="mono">84</td>
-<td class="mono hide-sm">91</td>
-<td><span class="bar"><i style="width:67%;background:#3fb950"></i></span><span class="mono">67%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 19</td>
-<td class="mono">85</td>
-<td class="mono hide-sm">87</td>
-<td><span class="bar"><i style="width:68%;background:#3fb950"></i></span><span class="mono">68%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 21</td>
-<td class="mono">90</td>
-<td class="mono hide-sm">57</td>
-<td><span class="bar"><i style="width:72%;background:#3fb950"></i></span><span class="mono">72%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 51</td>
-<td class="mono">90</td>
-<td class="mono hide-sm">114</td>
-<td><span class="bar"><i style="width:72%;background:#3fb950"></i></span><span class="mono">72%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 57</td>
-<td class="mono">91</td>
-<td class="mono hide-sm">103</td>
-<td><span class="bar"><i style="width:72%;background:#3fb950"></i></span><span class="mono">72%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 11</td>
-<td class="mono">92</td>
-<td class="mono hide-sm">97</td>
-<td><span class="bar"><i style="width:74%;background:#3fb950"></i></span><span class="mono">74%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 75</td>
-<td class="mono">93</td>
-<td class="mono hide-sm">113</td>
-<td><span class="bar"><i style="width:74%;background:#3fb950"></i></span><span class="mono">74%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 74</td>
-<td class="mono">94</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:75%;background:#3fb950"></i></span><span class="mono">75%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 48</td>
-<td class="mono">94</td>
-<td class="mono hide-sm">92</td>
-<td><span class="bar"><i style="width:75%;background:#3fb950"></i></span><span class="mono">75%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 70</td>
-<td class="mono">97</td>
-<td class="mono hide-sm">94</td>
-<td><span class="bar"><i style="width:77%;background:#3fb950"></i></span><span class="mono">77%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 30</td>
-<td class="mono">97</td>
-<td class="mono hide-sm">115</td>
-<td><span class="bar"><i style="width:78%;background:#3fb950"></i></span><span class="mono">78%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 60</td>
-<td class="mono">97</td>
-<td class="mono hide-sm">100</td>
-<td><span class="bar"><i style="width:78%;background:#3fb950"></i></span><span class="mono">78%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 7</td>
-<td class="mono">98</td>
-<td class="mono hide-sm">91</td>
-<td><span class="bar"><i style="width:78%;background:#3fb950"></i></span><span class="mono">78%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 86</td>
-<td class="mono">99</td>
-<td class="mono hide-sm">89</td>
-<td><span class="bar"><i style="width:79%;background:#3fb950"></i></span><span class="mono">79%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 67</td>
-<td class="mono">100</td>
-<td class="mono hide-sm">77</td>
-<td><span class="bar"><i style="width:80%;background:#3fb950"></i></span><span class="mono">80%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 55</td>
-<td class="mono">100</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:80%;background:#3fb950"></i></span><span class="mono">80%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 16</td>
-<td class="mono">100</td>
-<td class="mono hide-sm">84</td>
-<td><span class="bar"><i style="width:80%;background:#3fb950"></i></span><span class="mono">80%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 6</td>
-<td class="mono">101</td>
-<td class="mono hide-sm">93</td>
-<td><span class="bar"><i style="width:80%;background:#3fb950"></i></span><span class="mono">80%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 95</td>
-<td class="mono">102</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:81%;background:#3fb950"></i></span><span class="mono">81%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 28</td>
-<td class="mono">104</td>
-<td class="mono hide-sm">97</td>
-<td><span class="bar"><i style="width:84%;background:#3fb950"></i></span><span class="mono">84%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 15</td>
-<td class="mono">107</td>
-<td class="mono hide-sm">83</td>
-<td><span class="bar"><i style="width:85%;background:#3fb950"></i></span><span class="mono">85%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 73</td>
-<td class="mono">109</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:87%;background:#3fb950"></i></span><span class="mono">87%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 50</td>
-<td class="mono">110</td>
-<td class="mono hide-sm">79</td>
-<td><span class="bar"><i style="width:88%;background:#3fb950"></i></span><span class="mono">88%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 59</td>
-<td class="mono">110</td>
-<td class="mono hide-sm">114</td>
-<td><span class="bar"><i style="width:88%;background:#3fb950"></i></span><span class="mono">88%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 23</td>
-<td class="mono">110</td>
-<td class="mono hide-sm">113</td>
-<td><span class="bar"><i style="width:88%;background:#3fb950"></i></span><span class="mono">88%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 29</td>
-<td class="mono">110</td>
-<td class="mono hide-sm">90</td>
-<td><span class="bar"><i style="width:88%;background:#3fb950"></i></span><span class="mono">88%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 71</td>
-<td class="mono">111</td>
-<td class="mono hide-sm">118</td>
-<td><span class="bar"><i style="width:88%;background:#3fb950"></i></span><span class="mono">88%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 89</td>
-<td class="mono">111</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:89%;background:#3fb950"></i></span><span class="mono">89%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 88</td>
-<td class="mono">111</td>
-<td class="mono hide-sm">115</td>
-<td><span class="bar"><i style="width:89%;background:#3fb950"></i></span><span class="mono">89%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 26</td>
-<td class="mono">112</td>
-<td class="mono hide-sm">119</td>
-<td><span class="bar"><i style="width:89%;background:#3fb950"></i></span><span class="mono">89%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 83</td>
-<td class="mono">113</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:91%;background:#3fb950"></i></span><span class="mono">91%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 47</td>
-<td class="mono">114</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:92%;background:#3fb950"></i></span><span class="mono">92%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 96</td>
-<td class="mono">115</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:92%;background:#3fb950"></i></span><span class="mono">92%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 54</td>
-<td class="mono">115</td>
-<td class="mono hide-sm">97</td>
-<td><span class="bar"><i style="width:92%;background:#3fb950"></i></span><span class="mono">92%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 44</td>
-<td class="mono">115</td>
-<td class="mono hide-sm">109</td>
-<td><span class="bar"><i style="width:92%;background:#3fb950"></i></span><span class="mono">92%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 33</td>
-<td class="mono">116</td>
-<td class="mono hide-sm">106</td>
-<td><span class="bar"><i style="width:93%;background:#3fb950"></i></span><span class="mono">93%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 2</td>
-<td class="mono">117</td>
-<td class="mono hide-sm">98</td>
-<td><span class="bar"><i style="width:93%;background:#3fb950"></i></span><span class="mono">93%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 69</td>
-<td class="mono">117</td>
-<td class="mono hide-sm">121</td>
-<td><span class="bar"><i style="width:94%;background:#3fb950"></i></span><span class="mono">94%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 14</td>
-<td class="mono">117</td>
-<td class="mono hide-sm">107</td>
-<td><span class="bar"><i style="width:94%;background:#3fb950"></i></span><span class="mono">94%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 9</td>
-<td class="mono">117</td>
-<td class="mono hide-sm">111</td>
-<td><span class="bar"><i style="width:94%;background:#3fb950"></i></span><span class="mono">94%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 25</td>
-<td class="mono">118</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:95%;background:#3fb950"></i></span><span class="mono">95%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 87</td>
-<td class="mono">118</td>
-<td class="mono hide-sm">116</td>
-<td><span class="bar"><i style="width:95%;background:#3fb950"></i></span><span class="mono">95%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 85</td>
-<td class="mono">121</td>
-<td class="mono hide-sm">118</td>
-<td><span class="bar"><i style="width:97%;background:#3fb950"></i></span><span class="mono">97%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 65</td>
-<td class="mono">122</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:97%;background:#3fb950"></i></span><span class="mono">97%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 99</td>
-<td class="mono">122</td>
-<td class="mono hide-sm">117</td>
-<td><span class="bar"><i style="width:98%;background:#3fb950"></i></span><span class="mono">98%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 39</td>
-<td class="mono">124</td>
-<td class="mono hide-sm">125</td>
-<td><span class="bar"><i style="width:99%;background:#3fb950"></i></span><span class="mono">99%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 1</td>
-<td class="mono">124</td>
-<td class="mono hide-sm">112</td>
-<td><span class="bar"><i style="width:99%;background:#3fb950"></i></span><span class="mono">99%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 22</td>
-<td class="mono">124</td>
-<td class="mono hide-sm">111</td>
-<td><span class="bar"><i style="width:99%;background:#3fb950"></i></span><span class="mono">99%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr><tr data-s="green">
-<td class="eng">Engine 78</td>
-<td class="mono">124</td>
-<td class="mono hide-sm">107</td>
-<td><span class="bar"><i style="width:99%;background:#3fb950"></i></span><span class="mono">99%</span></td>
-<td><span class="pill green">HEALTHY</span></td>
-</tr>
-</tbody></table>
-<div class="note">The "actual" column is NASA's sealed answer key. The model never saw it —
-it's shown here so you can check the predictions yourself.</div>
-
-<footer>
-Built by <a href="https://github.com/FerasElghandour">Feras Elghandour</a> — part of a series on building intelligent systems
-that solve real-world problems.<br>
-Data: NASA C-MAPSS Turbofan Engine Degradation benchmark (FD001). A demonstration of end-to-end
-system architecture — the same pipeline transfers to business problems like customer churn.
-</footer>
-
-</div><script>
-const btns=document.querySelectorAll('.filters button');
-btns.forEach(b=>b.onclick=()=>{
-  btns.forEach(x=>x.classList.remove('on'));b.classList.add('on');
-  const f=b.dataset.f;
-  document.querySelectorAll('.tbl tbody tr').forEach(r=>{
-    r.style.display=(f==='all'||r.dataset.s===f)?'':'none';
-  });
-});
-</script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Predictive Maintenance: implementation, evidence and interactive demonstration by Feras Elghandour."><meta name="referrer" content="strict-origin-when-cross-origin"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'"><meta name="color-scheme" content="light"><title>Predictive Maintenance | Feras Elghandour</title><link rel="stylesheet" href="style.css"><link rel="icon" href="data:,"></head><body class="report"><a class="skip" href="#main">Skip to content</a><header><nav aria-label="Main navigation"><a href="https://feraselghandour.github.io/">Feras Elghandour</a><span><a href="https://github.com/FerasElghandour">GitHub</a> · <a href="https://www.linkedin.com/in/feras-elghandour/">LinkedIn / inquiries</a></span></nav></header><main id="main"><section class="hero"><p class="eyebrow">Interactive case study / maintenance</p><h1>Predictive Maintenance</h1><p class="intro">Compare development choices and inspect an observed-window maintenance replay with explicit censoring.</p><div class="links"><a href="https://github.com/FerasElghandour/predictive-maintenance">Implementation &amp; reproduction</a><a href="https://www.linkedin.com/in/feras-elghandour/">Discuss a project</a></div></section><section class="section"><h2>Explore the evidence</h2><p id="finding" class="note" role="status" aria-live="polite"></p><div id="chart" aria-label="Comparison chart"></div><div id="results" class="table-wrap"></div><p id="decision" class="status"></p><button id="download" type="button">Download evidence JSON</button></section><section class="section split"><div><h2>How it works</h2><div class="diagram" aria-label="Implementation flow"><span>Input</span> <b aria-hidden="true">→</b> <span>Validation</span> <b aria-hidden="true">→</b> <span>Decision</span> <b aria-hidden="true">→</b> <span>Evidence</span></div><p>All training and validation splits are by engine. Model selection and the threshold sweep use validation engines. The first-five-cycle drift reference now uses only observations available at each cycle.</p><p>Test trajectories are truncated. Engines that never enter the policy danger window during observation are counted as censored, rather than as demonstrated eventual successes.</p><p>FD001 is a previously explored public benchmark. These corrected results are not new external safety validation; fleet deployment requires prospective evaluation and operational review.</p></div><aside><h2>Inspect the result</h2><p>The table changes with the selected view. Data downloads include the evidence used here.</p><p><a href="https://github.com/FerasElghandour/predictive-maintenance/blob/main/README.md">Read the technical case study</a></p><details><summary>Recorded trace / dataset</summary><pre id="details">{
+  &quot;kind&quot;: &quot;maintenance&quot;,
+  &quot;metrics&quot;: {
+    &quot;protocol&quot;: &quot;engine-disjoint development and validation; historical public test cohort; observed-window policy replay&quot;,
+    &quot;train_engines&quot;: [
+      1,
+      2,
+      4,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      20,
+      21,
+      23,
+      24,
+      27,
+      29,
+      30,
+      31,
+      32,
+      33,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      54,
+      55,
+      56,
+      58,
+      59,
+      61,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      94,
+      95,
+      96,
+      97,
+      99
+    ],
+    &quot;validation_engines&quot;: [
+      3,
+      5,
+      19,
+      22,
+      25,
+      26,
+      28,
+      34,
+      43,
+      51,
+      52,
+      53,
+      57,
+      60,
+      62,
+      72,
+      82,
+      93,
+      98,
+      100
+    ],
+    &quot;validation_model_mae&quot;: {
+      &quot;ridge&quot;: 0.9507088247008433,
+      &quot;random_forest&quot;: 2.4163207837054124
+    },
+    &quot;selected_model&quot;: &quot;ridge&quot;,
+    &quot;validation_policy_sweep&quot;: [
+      {
+        &quot;engines&quot;: 20,
+        &quot;eligible_observed&quot;: 20,
+        &quot;censored_before_danger&quot;: 0,
+        &quot;warned&quot;: 20,
+        &quot;good&quot;: 13,
+        &quot;late&quot;: 6,
+        &quot;early&quot;: 1,
+        &quot;missed_observed&quot;: 0,
+        &quot;threshold&quot;: 0.3,
+        &quot;lead_time&quot;: 20,
+        &quot;median_warning_cycles&quot;: 22.0,
+        &quot;miss_rate_observed_eligible&quot;: 0.0
+      },
+      {
+        &quot;engines&quot;: 20,
+        &quot;eligible_observed&quot;: 20,
+        &quot;censored_before_danger&quot;: 0,
+        &quot;warned&quot;: 20,
+        &quot;good&quot;: 17,
+        &quot;late&quot;: 2,
+        &quot;early&quot;: 1,
+        &quot;missed_observed&quot;: 0,
+        &quot;threshold&quot;: 0.35,
+        &quot;lead_time&quot;: 20,
+        &quot;median_warning_cycles&quot;: 25.5,
+        &quot;miss_rate_observed_eligible&quot;: 0.0
+      },
+      {
+        &quot;engines&quot;: 20,
+        &quot;eligible_observed&quot;: 20,
+        &quot;censored_before_danger&quot;: 0,
+        &quot;warned&quot;: 20,
+        &quot;good&quot;: 17,
+        &quot;late&quot;: 2,
+        &quot;early&quot;: 1,
+        &quot;missed_observed&quot;: 0,
+        &quot;threshold&quot;: 0.4,
+        &quot;lead_time&quot;: 20,
+        &quot;median_warning_cycles&quot;: 30.0,
+        &quot;miss_rate_observed_eligible&quot;: 0.0
+      },
+      {
+        &quot;engines&quot;: 20,
+        &quot;eligible_observed&quot;: 20,
+        &quot;censored_before_danger&quot;: 0,
+        &quot;warned&quot;: 20,
+        &quot;good&quot;: 18,
+        &quot;late&quot;: 1,
+        &quot;early&quot;: 1,
+        &quot;missed_observed&quot;: 0,
+        &quot;threshold&quot;: 0.45,
+        &quot;lead_time&quot;: 20,
+        &quot;median_warning_cycles&quot;: 33.5,
+        &quot;miss_rate_observed_eligible&quot;: 0.0
+      }
+    ],
+    &quot;frozen_threshold&quot;: 0.45,
+    &quot;test_snapshot_mae&quot;: 13.443377567658025,
+    &quot;test_replay&quot;: {
+      &quot;engines&quot;: 100,
+      &quot;eligible_observed&quot;: 35,
+      &quot;censored_before_danger&quot;: 65,
+      &quot;warned&quot;: 30,
+      &quot;good&quot;: 29,
+      &quot;late&quot;: 0,
+      &quot;early&quot;: 1,
+      &quot;missed_observed&quot;: 5,
+      &quot;threshold&quot;: 0.45,
+      &quot;lead_time&quot;: 20,
+      &quot;median_warning_cycles&quot;: 36.5,
+      &quot;miss_rate_observed_eligible&quot;: 0.14285714285714285
+    },
+    &quot;limits&quot;: [
+      &quot;Test trajectories stop before failure.&quot;,
+      &quot;Public FD001 was inspected in earlier development.&quot;,
+      &quot;Observed-window rates do not establish eventual failure coverage or certified safety.&quot;
+    ],
+    &quot;source_sha256&quot;: {
+      &quot;validate_release.py&quot;: &quot;7a0148af65eacd0bca537799e435d396e0a7b2ad517929e7f8a326b24ac2a681&quot;,
+      &quot;src/features.py&quot;: &quot;e00b2102dad0ec4b828e4b933dbb98a97d7f216cfb49700ab00a558179da3c33&quot;,
+      &quot;src/data.py&quot;: &quot;8975b31693b9d2470dc766125403525e2b731b7788bd25cc06d8cbf7146a12bb&quot;
+    },
+    &quot;input_sha256&quot;: {
+      &quot;RUL_FD001.txt&quot;: &quot;a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca&quot;,
+      &quot;test_FD001.txt&quot;: &quot;3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851&quot;,
+      &quot;train_FD001.txt&quot;: &quot;963b5e22825b34d8b21c69e1aeb4af3e647050eb672ee8834ba4b5d91d2de0f8&quot;
+    }
+  }
+}</pre></details></aside></section></main><footer>Feras Elghandour · Applied AI &amp; decision systems<br>Public demonstrations use attributed public data or synthetic examples. Client identities and private operating records are omitted.</footer><script type="application/json" id="report-data">{"kind": "maintenance", "metrics": {"protocol": "engine-disjoint development and validation; historical public test cohort; observed-window policy replay", "train_engines": [1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 23, 24, 27, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 54, 55, 56, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 94, 95, 96, 97, 99], "validation_engines": [3, 5, 19, 22, 25, 26, 28, 34, 43, 51, 52, 53, 57, 60, 62, 72, 82, 93, 98, 100], "validation_model_mae": {"ridge": 0.9507088247008433, "random_forest": 2.4163207837054124}, "selected_model": "ridge", "validation_policy_sweep": [{"engines": 20, "eligible_observed": 20, "censored_before_danger": 0, "warned": 20, "good": 13, "late": 6, "early": 1, "missed_observed": 0, "threshold": 0.3, "lead_time": 20, "median_warning_cycles": 22.0, "miss_rate_observed_eligible": 0.0}, {"engines": 20, "eligible_observed": 20, "censored_before_danger": 0, "warned": 20, "good": 17, "late": 2, "early": 1, "missed_observed": 0, "threshold": 0.35, "lead_time": 20, "median_warning_cycles": 25.5, "miss_rate_observed_eligible": 0.0}, {"engines": 20, "eligible_observed": 20, "censored_before_danger": 0, "warned": 20, "good": 17, "late": 2, "early": 1, "missed_observed": 0, "threshold": 0.4, "lead_time": 20, "median_warning_cycles": 30.0, "miss_rate_observed_eligible": 0.0}, {"engines": 20, "eligible_observed": 20, "censored_before_danger": 0, "warned": 20, "good": 18, "late": 1, "early": 1, "missed_observed": 0, "threshold": 0.45, "lead_time": 20, "median_warning_cycles": 33.5, "miss_rate_observed_eligible": 0.0}], "frozen_threshold": 0.45, "test_snapshot_mae": 13.443377567658025, "test_replay": {"engines": 100, "eligible_observed": 35, "censored_before_danger": 65, "warned": 30, "good": 29, "late": 0, "early": 1, "missed_observed": 5, "threshold": 0.45, "lead_time": 20, "median_warning_cycles": 36.5, "miss_rate_observed_eligible": 0.14285714285714285}, "limits": ["Test trajectories stop before failure.", "Public FD001 was inspected in earlier development.", "Observed-window rates do not establish eventual failure coverage or certified safety."], "source_sha256": {"validate_release.py": "7a0148af65eacd0bca537799e435d396e0a7b2ad517929e7f8a326b24ac2a681", "src/features.py": "e00b2102dad0ec4b828e4b933dbb98a97d7f216cfb49700ab00a558179da3c33", "src/data.py": "8975b31693b9d2470dc766125403525e2b731b7788bd25cc06d8cbf7146a12bb"}, "input_sha256": {"RUL_FD001.txt": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca", "test_FD001.txt": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851", "train_FD001.txt": "963b5e22825b34d8b21c69e1aeb4af3e647050eb672ee8834ba4b5d91d2de0f8"}}}</script><script src="report.js" defer></script></body></html>

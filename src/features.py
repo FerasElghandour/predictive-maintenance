@@ -90,7 +90,11 @@ def build_features(df: pd.DataFrame, sensors=USEFUL_SENSORS) -> pd.DataFrame:
         )
 
         # 2. how far has it drifted from THIS engine's own healthy baseline
-        baseline = g[s].transform(lambda x: x.head(BASELINE_CYCLES).mean())
+        # The first five observations are not available at cycle one. Freeze
+        # the reference after warm-up, using only observations seen so far.
+        baseline = g[s].transform(
+            lambda x: x.expanding().mean().where(np.arange(len(x)) < BASELINE_CYCLES).ffill()
+        )
         out[f"{s}_drift"] = df[s] - baseline
 
         # 3. how fast is it moving
