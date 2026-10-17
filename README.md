@@ -6,7 +6,9 @@ Estimate remaining engine life and translate predictions into an inspectable mai
 
 **[Explore the interactive report](https://feraselghandour.github.io/predictive-maintenance/)** · [Evaluation record](artifacts/release_validation.json) · [Operating scope](OPERATIONS.md)
 
-[![Observed-window evaluation](assets/demo-preview.png)](https://feraselghandour.github.io/predictive-maintenance/)
+[![Recorded observed-window maintenance outcomes](https://raw.githubusercontent.com/FerasElghandour/FerasElghandour.github.io/main/assets/maintenance-outcomes.png)](https://feraselghandour.github.io/predictive-maintenance/)
+
+The figure separates timely and early warnings, observed misses and histories censored before the danger window. Replotted from the [corrected report data](docs/data.json).
 
 ## Problem and implementation
 
